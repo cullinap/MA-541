@@ -5,6 +5,7 @@ library(car)
 library(ggpubr)
 library(tidyverse)
 library(rstatix)
+library(ggstatsplot)
 
 setwd("C:/Users/Laura/Documents/code/MA-541")
 df <- read.csv("Crime_R.csv")
@@ -58,12 +59,19 @@ qqPlot(aov_test$residuals)
 pwc <- kruskal.test(Males ~ Southern, data = anova_df)
 
 ##pwc <- pwc %>% add_xy_position(x = "Southern")
-ggboxplot(anova_df, x = "Southern", y = "Males") +
-  stat_pvalue_manual(pwc, hide.ns = TRUE) +
-  labs(
-    subtitle = get_test_label(res.kruskal, detailed = TRUE),
-    caption = get_pwc_label(pwc)
-    )
+library(ggstatsplot)
+
+ggbetweenstats(
+  data = anova_df,
+  x = "Southern",
+  y = "Males",
+  type = "nonparametric", # ANOVA or Kruskal-Wallis
+  plot.type = "box",
+  pairwise.comparisons = TRUE,
+  pairwise.display = "significant",
+  centrality.plotting = FALSE,
+  bf.message = FALSE
+)
 
 ```
 
