@@ -1,0 +1,46 @@
+```{r}
+library(dplyr)
+
+setwd("C:/Users/Laura/Documents/code/MA-541")
+df <- read.csv("Crime_R.csv")
+# split data into year 0 and year + 10 
+dim(df)
+names(df)
+head(df,2)
+tail(df,2)
+
+df0 <- df %>%
+  select(-ends_with('10'))
+df10 <- df %>%
+  select(ends_with('10'))
+
+#str(df)
+```
+
+
+
+```{r}
+str(df0)
+str(df10)
+
+```
+
+
+```{r}
+df2 <- df # temp df to stack dfs
+
+df2$Southern <- ifelse(df2$Southern == 0, 3, 4)
+
+anova_df <- rbind(
+  as.matrix(df[,c("Southern","Males")])
+  , as.matrix(df2[,c("Southern", "Males10")])
+)
+
+head(anova_df)
+
+
+
+```
+
+
+
