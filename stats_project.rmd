@@ -24,45 +24,24 @@ df10 <- df %>%
 ```
 
 ```{r}
-#str(df0)
-#str(df10)
+df1 <- df[,c("Southern","Males")]
+df2 <- df[,c("Southern","Males10")]
+df2$Southern <- ifelse(df2$Southern == 0, 3,4)
+names(df2)[2] <- "Males"
 
-```
+df_stack <- rbind(df1,df2)
+df_stack$Southern <- as.factor(df_stack$Southern)
 
-```{r}
-df2 <- df # temp df to stack dfs
-
-df2$Southern <- ifelse(df2$Southern == 0, 3, 4)
-
-df2$Southern <- as.factor(df2$Southern)
-df$Southern <- as.factor(df$Southern)
-
-anova_df <- data.frame(
-    rbind(
-    as.matrix(df[,c("Southern","Males")])
-    , as.matrix(df2[,c("Southern", "Males10")])
-  )
-)
-
-
-#anova_df$Southern <- as.factor(anova_df$Southern)
-#anova_df <- as.matrix(anova_df)
-
-aov_test <- aov(Males ~ Southern, data=anova_df)
+aov_test <- aov(Males ~ Southern, data=df_stack)
 summary(aov_test)
-
-par(mfrow=c(1,2))
 
 hist(aov_test$residuals)
 qqPlot(aov_test$residuals)
 
-pwc <- kruskal.test(Males ~ Southern, data = anova_df)
-
-##pwc <- pwc %>% add_xy_position(x = "Southern")
-library(ggstatsplot)
+kruskal.test(Males ~ Southern, data = df_stack)
 
 ggbetweenstats(
-  data = anova_df,
+  data = df_stack,
   x = "Southern",
   y = "Males",
   type = "nonparametric", # ANOVA or Kruskal-Wallis
@@ -72,6 +51,42 @@ ggbetweenstats(
   centrality.plotting = FALSE,
   bf.message = FALSE
 )
+
+```
+
+```{r}
+#df2 <- df # temp df to stack dfs
+
+#df2$Southern <- ifelse(df2$Southern == 0, 3, 4)
+
+#df2$Southern <- as.factor(df2$Southern)
+#df$Southern <- as.factor(df$Southern)
+
+#anova_df <- data.frame(
+#    rbind(
+#    as.matrix(df[,c("Southern","Males")])
+#    , as.matrix(df2[,c("Southern", "Males10")])
+#  )
+#)
+
+
+
+#anova_df$Southern <- as.factor(anova_df$Southern)
+#anova_df <- as.matrix(anova_df)
+
+#aov_test <- aov(Males ~ Southern, data=anova_df)
+#summary(aov_test)
+
+#par(mfrow=c(1,2))
+
+#hist(aov_test$residuals)
+#qqPlot(aov_test$residuals)
+
+#kruskal.test(Males ~ Southern, data = anova_df)
+
+##pwc <- pwc %>% add_xy_position(x = "Southern")
+
+
 
 ```
 
