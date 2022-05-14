@@ -1,5 +1,10 @@
 ```{r}
 library(dplyr)
+library(ggplot2)
+library(car)
+library(ggpubr)
+library(tidyverse)
+library(rstatix)
 
 setwd("C:/Users/Laura/Documents/code/MA-541")
 df <- read.csv("Crime_R.csv")
@@ -17,28 +22,48 @@ df10 <- df %>%
 #str(df)
 ```
 
-
-
 ```{r}
-str(df0)
-str(df10)
+#str(df0)
+#str(df10)
 
 ```
-
 
 ```{r}
 df2 <- df # temp df to stack dfs
 
 df2$Southern <- ifelse(df2$Southern == 0, 3, 4)
 
-anova_df <- rbind(
-  as.matrix(df[,c("Southern","Males")])
-  , as.matrix(df2[,c("Southern", "Males10")])
+df2$Southern <- as.factor(df2$Southern)
+df$Southern <- as.factor(df$Southern)
+
+anova_df <- data.frame(
+    rbind(
+    as.matrix(df[,c("Southern","Males")])
+    , as.matrix(df2[,c("Southern", "Males10")])
+  )
 )
 
-head(anova_df)
 
+#anova_df$Southern <- as.factor(anova_df$Southern)
+#anova_df <- as.matrix(anova_df)
 
+aov_test <- aov(Males ~ Southern, data=anova_df)
+summary(aov_test)
+
+par(mfrow=c(1,2))
+
+hist(aov_test$residuals)
+qqPlot(aov_test$residuals)
+
+pwc <- kruskal.test(Males ~ Southern, data = anova_df)
+
+##pwc <- pwc %>% add_xy_position(x = "Southern")
+ggboxplot(anova_df, x = "Southern", y = "Males") +
+  stat_pvalue_manual(pwc, hide.ns = TRUE) +
+  labs(
+    subtitle = get_test_label(res.kruskal, detailed = TRUE),
+    caption = get_pwc_label(pwc)
+    )
 
 ```
 
