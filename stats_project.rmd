@@ -1,3 +1,10 @@
+Patrick Cullinane
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -23,9 +30,24 @@ df10 <- df %>%
 #str(df)
 ```
 
+The Crime Rate dataset is comprised of data collected on crime rates and associated variables from two different time periods in the United States. The data is comprised of 27 columns with 47 rows of data. The first 14 columns are the data collected in the first time period. Additionally in the first set of columns is a column called Southern, which is a binary variable denoting whether a state is classified as Southern or not. The final 13 columns are are the same data collected as the first 13 with the exception of being 10 years in the future. The Southern column applys to both time periods of data. 
+
+The first question we will examine will be whether there is a relationship between Males and Southern states. To accomplish this we will use 3 columns; Southern, Males, and Males10. To analyze differences we will need to engineer Southern variable that corresponds to Males10. The first group of Males at what we will call time 0 will be code "1" if it is a Southern state and "0" if not. In the second group we will use "4" to denote a Southern state and "3" otherwise. In this way we will have 4 groups of Males. Before we perform our testing we will examine the data in more depth. 
+
+First we will look at how the data is comprised using stem and histogram plots. 
+
 ```{r}
 df1 <- df[,c("Southern","Males")]
 df2 <- df[,c("Southern","Males10")]
+stem(df$Southern)
+stem(df$Males)
+stem(df$Males10)
+```
+
+
+
+```{r}
+
 df2$Southern <- ifelse(df2$Southern == 0, 3,4)
 names(df2)[2] <- "Males"
 
@@ -66,9 +88,6 @@ plot(lm.fit)
 
 ```
 
-
-
-
 ```{r}
 model <- lm(CrimeRate~.,data=df0)
 summary(model)
@@ -91,7 +110,6 @@ anova(lm.fit, lm.fit2)
 
 
 ```
-
 
 ```{r}
 lm.fit3 <- lm(
@@ -116,6 +134,3 @@ anova(lm.fit3, lm.fit4)
 
 
 ```
-
-
-
