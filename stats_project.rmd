@@ -34,7 +34,10 @@ The Crime Rate dataset is comprised of data collected on crime rates and associa
 
 The first question we will examine will be whether there is a relationship between Males and Southern states. To accomplish this we will use 3 columns; Southern, Males, and Males10. To analyze differences we will need to engineer Southern variable that corresponds to Males10. The first group of Males at what we will call time 0 will be code "1" if it is a Southern state and "0" if not. In the second group we will use "4" to denote a Southern state and "3" otherwise. In this way we will have 4 groups of Males. Before we perform our testing we will examine the data in more depth. 
 
+The Males and Males10 columns refer to the number of males per 1000 females in the examined state. 
+
 First we will look at how the data is comprised using stem and histogram plots. 
+
 
 ```{r}
 df1 <- df[,c("Southern","Males")]
@@ -44,7 +47,28 @@ stem(df$Males)
 stem(df$Males10)
 ```
 
+We can see from the stem plots that we have more Southern states. We should note that although it is not explicity stated in the data what constitutes a Southern state the data seems to align with the US census bureau's definition of a Southern state. The US census counts 16 states in total as Southern States, which appears to align with our data. Alternatively we can see there are 31 "0" states which in total make 47 states counted in this dataset. We are not told what comprises the 31 non-Southern states. 
 
+```{r}
+sum(df$Southern == 1)
+sum(df$Southern == 0)
+```
+
+From the stem plots we can see that Males and Males10 both appear to be rightly skewed. We can examaine this in more detail using a histogram. 
+
+```{r}
+ggplot(df, aes(x=Males)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+
+ggplot(df, aes(x=Males10)) + 
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666")
+```
+
+More detailed examination with our histograms and density plots again show us that data may be skewed to the right. This will be important to note as we further examine whether there is a difference in means between groups of data. 
+
+With this intuition we will examine using anova whether there is a significant difference in group means. To accomplish this we must first encode our variables as previously described and then stack the data frames on top of eachother. 
 
 ```{r}
 
@@ -56,6 +80,9 @@ df_stack$Southern <- as.factor(df_stack$Southern)
 
 aov_test <- aov(Males ~ Southern, data=df_stack)
 summary(aov_test)
+```
+
+```{r}
 
 hist(aov_test$residuals)
 qqPlot(aov_test$residuals)
@@ -134,3 +161,9 @@ anova(lm.fit3, lm.fit4)
 
 
 ```
+
+References:
+
+1. US Census
+
+
