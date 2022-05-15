@@ -55,37 +55,64 @@ ggbetweenstats(
 ```
 
 ```{r}
-#df2 <- df # temp df to stack dfs
+lm.fit <- lm(CrimeRate ~ ExpenditureYear0, data=df0)
+summary(lm.fit)
 
-#df2$Southern <- ifelse(df2$Southern == 0, 3, 4)
+plot(df0$CrimeRate, df$ExpenditureYear0)
+abline(lm.fit, lwd=3, col="red")
 
-#df2$Southern <- as.factor(df2$Southern)
-#df$Southern <- as.factor(df$Southern)
+par(mfrow = c(2,2))
+plot(lm.fit)
 
-#anova_df <- data.frame(
-#    rbind(
-#    as.matrix(df[,c("Southern","Males")])
-#    , as.matrix(df2[,c("Southern", "Males10")])
-#  )
-#)
+```
 
 
 
-#anova_df$Southern <- as.factor(anova_df$Southern)
-#anova_df <- as.matrix(anova_df)
 
-#aov_test <- aov(Males ~ Southern, data=anova_df)
-#summary(aov_test)
+```{r}
+model <- lm(CrimeRate~.,data=df0)
+summary(model)
 
-#par(mfrow=c(1,2))
+lm.fit <- lm(
+  CrimeRate ~ 
+    Education + Youth + Wage + BelowWage 
+    + ExpenditureYear0, data=df0)
 
-#hist(aov_test$residuals)
-#qqPlot(aov_test$residuals)
+lm.fit2 <- lm(
+  CrimeRate ~
+    Youth + Wage + BelowWage
+    + ExpenditureYear0, data=df0
+)
 
-#kruskal.test(Males ~ Southern, data = anova_df)
+summary(lm.fit)
+summary(lm.fit2)
 
-##pwc <- pwc %>% add_xy_position(x = "Southern")
+anova(lm.fit, lm.fit2)
 
+
+```
+
+
+```{r}
+lm.fit3 <- lm(
+  CrimeRate ~ 
+    + log10(Youth)
+    + log10(Wage)
+    + log10(BelowWage) 
+    + log10(ExpenditureYear0), data=df0
+)
+
+lm.fit4 <- lm(
+  CrimeRate ~ 
+  + log10(Youth)
+  + log10(BelowWage) 
+  + log10(ExpenditureYear0), data=df0
+)
+
+summary(lm.fit3)
+summary(lm.fit4)
+
+anova(lm.fit3, lm.fit4)
 
 
 ```
