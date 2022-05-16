@@ -1,4 +1,8 @@
+# Crime Rate Dataset
+
 Patrick Cullinane
+MA-541
+May 16th, 2022
 
 ```{r setup, include=FALSE} 
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
@@ -16,21 +20,37 @@ library(ggstatsplot)
 
 setwd("C:/Users/Laura/Documents/code/MA-541")
 df <- read.csv("Crime_R.csv")
-# split data into year 0 and year + 10 
+
+
+#str(df)
+```
+
+### Introduction
+
+The Crime Rate dataset is comprised of data crime rate and associated variables collected in the United States at two different periods of time. The dataset is broken down into 27 columns and 47 rows. The dataset was developed by the University of Sheffield 
+
+```{r}
 dim(df)
+
 names(df)
-head(df,2)
-tail(df,2)
+```
+
+The first 13 columns consist of crime rate data and other measurements taken at a point in time, and the next set consists of the same data taken a decade later. Additionally there is a column called Southern which consists of a binary variable, 1 if a Southern state 0 otherwise. The Southern column applys to both sets of columns within the dataset. We are not told the exact date at which the data has been collected. Overall the data is a mixture of discrete, binary, continuous variables. 
+
+```{r}
+# split data into year 0 and year + 10 
 
 df0 <- df %>%
   select(-ends_with('10'))
 df10 <- df %>%
   select(ends_with('10'))
 
-#str(df)
+head(df0,2)
+tail(df0,2)
 ```
 
-The Crime Rate dataset is comprised of data collected on crime rates and associated variables from two different time periods in the United States. The data is comprised of 27 columns with 47 rows of data. The first 14 columns are the data collected in the first time period. Additionally in the first set of columns is a column called Southern, which is a binary variable denoting whether a state is classified as Southern or not. The final 13 columns are are the same data collected as the first 13 with the exception of being 10 years in the future. The Southern column applys to both time periods of data. 
+### Experiment 1
+
 
 The first question we will examine will be whether there is a relationship between Males and Southern states. To accomplish this we will use 3 columns; Southern, Males, and Males10. To analyze differences we will need to engineer Southern variable that corresponds to Males10. The first group of Males at what we will call time 0 will be code "1" if it is a Southern state and "0" if not. In the second group we will use "4" to denote a Southern state and "3" otherwise. In this way we will have 4 groups of Males. Before we perform our testing we will examine the data in more depth. 
 
@@ -68,7 +88,7 @@ ggplot(df, aes(x=Males10)) +
 
 More detailed examination with our histograms and density plots again show us that data may be skewed to the right. This will be important to note as we further examine whether there is a difference in means between groups of data. 
 
-With this intuition we will examine using anova whether there is a significant difference in group means. To accomplish this we must first encode our variables as previously described and then stack the data frames on top of eachother. 
+With this intuition we will examine using anova whether there is a significant difference in group means. To accomplish this we must first encode our variables as previously described and then stack the data frames on top of eachother. Next we will run an anova test on the data. We formulate the null hypothesis that there is no difference in means between the groups of data and the alternative hypothesis that there is a difference of means. 
 
 ```{r}
 
@@ -82,13 +102,28 @@ aov_test <- aov(Males ~ Southern, data=df_stack)
 summary(aov_test)
 ```
 
+It appears from the results that we can reject our null hypothesis that the means of the groups are equal. 
+
+Our next step is to perform post-hoc teting to see which groups are different. First though we would like to examine our results in more detail to see what tests we need to perform. 
+
+We examine the residuals of the anova results to see if our data meets the normality assumption needed for tukey or bonferroni. We will do this graphically through a histogram of the residuals and qqplot. 
+
+
 ```{r}
 
 hist(aov_test$residuals)
 qqPlot(aov_test$residuals)
+```
 
+Graphically it appears that the residuals are not nornally distributed but we need to examine this more formally with a kruskal test
+
+
+```{r}
 kruskal.test(Males ~ Southern, data = df_stack)
+```
 
+
+```{r}
 ggbetweenstats(
   data = df_stack,
   x = "Southern",
@@ -164,6 +199,7 @@ anova(lm.fit3, lm.fit4)
 
 References:
 
-1. US Census
+1. www.statstutor.ac.uk
+2. US Census
 
 
