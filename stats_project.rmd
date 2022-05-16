@@ -1,8 +1,11 @@
 # Crime Rate Dataset
 
-Patrick Cullinane
-MA-541
-May 16th, 2022
+---
+title: Crime Rate Dataset analysis
+author: Patrick Cullinane
+date: "05/16/2022"
+output: html_document
+---
 
 ```{r setup, include=FALSE} 
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
@@ -25,7 +28,7 @@ df <- read.csv("Crime_R.csv")
 #str(df)
 ```
 
-### Introduction
+## Introduction
 
 The Crime Rate dataset is comprised of data crime rate and associated variables collected in the United States at two different periods of time. The dataset is broken down into 27 columns and 47 rows. The dataset was developed by the University of Sheffield 
 
@@ -49,15 +52,18 @@ head(df0,2)
 tail(df0,2)
 ```
 
-### Experiment 1
+## Experiment 1
 
+The first question we will examine will be whether there is a relationship between Males per 1000 females and states classified as Southern. To accomplish this we will use 3 columns; Southern, Males, and Males10. As mentioned previously Southern is a binary variable while Males and Males10 are discrete variables. Males and Males10 both refer to the number of males per 1000 females in counted in a US State. 
 
-The first question we will examine will be whether there is a relationship between Males and Southern states. To accomplish this we will use 3 columns; Southern, Males, and Males10. To analyze differences we will need to engineer Southern variable that corresponds to Males10. The first group of Males at what we will call time 0 will be code "1" if it is a Southern state and "0" if not. In the second group we will use "4" to denote a Southern state and "3" otherwise. In this way we will have 4 groups of Males. Before we perform our testing we will examine the data in more depth. 
+To get an idea of the make-up of the data we look at the summary statistics.
 
-The Males and Males10 columns refer to the number of males per 1000 females in the examined state. 
+```{r}
+str(df[,c("Southern","Males","Males10")])
+summary(df[,c("Southern","Males","Males10")])
+```
 
-First we will look at how the data is comprised using stem and histogram plots. 
-
+Next let's look at how the data's shape using some plots. 
 
 ```{r}
 df1 <- df[,c("Southern","Males")]
@@ -67,11 +73,13 @@ stem(df$Males)
 stem(df$Males10)
 ```
 
-We can see from the stem plots that we have more Southern states. We should note that although it is not explicity stated in the data what constitutes a Southern state the data seems to align with the US census bureau's definition of a Southern state. The US census counts 16 states in total as Southern States, which appears to align with our data. Alternatively we can see there are 31 "0" states which in total make 47 states counted in this dataset. We are not told what comprises the 31 non-Southern states. 
+We can see from the stem plots that we have more Southern states. We should note that although it is not explicity stated in the data what constitutes a Southern state the data seems to align with the US census bureau's definition of a Southern state. The US census counts 16 states in total as Southern States, which appears to align with our data. Alternatively we can see there are 31 "0" states which in total make 47 states counted in this dataset. We are not told what comprise the 31 non-Southern states. 
 
 ```{r}
 sum(df$Southern == 1)
 sum(df$Southern == 0)
+
+boxplot(df[,c("Males","Males10")])
 ```
 
 From the stem plots we can see that Males and Males10 both appear to be rightly skewed. We can examaine this in more detail using a histogram. 
@@ -88,7 +96,14 @@ ggplot(df, aes(x=Males10)) +
 
 More detailed examination with our histograms and density plots again show us that data may be skewed to the right. This will be important to note as we further examine whether there is a difference in means between groups of data. 
 
-With this intuition we will examine using anova whether there is a significant difference in group means. To accomplish this we must first encode our variables as previously described and then stack the data frames on top of eachother. Next we will run an anova test on the data. We formulate the null hypothesis that there is no difference in means between the groups of data and the alternative hypothesis that there is a difference of means. 
+With this intuition we will examine using anova whether there is a significant difference in group means. To accomplish this we must first encode our the Southern column to match Males and Males10, and then stack the data frames on top of eachother. Next we will run an anova test on the data. 
+
+Next we formulate the following hypothesis:
+```
+[]
+```
+
+To analyze differences we will need to engineer Southern variable that corresponds to Males10. The first group of Males at what we will call time 0 will be code "1" if it is a Southern state and "0" if not. In the second group we will use "4" to denote a Southern state and "3" otherwise. In this way we will have 4 groups of Males. Before we perform our testing we will examine the data in more depth. 
 
 ```{r}
 
