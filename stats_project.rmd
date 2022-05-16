@@ -293,16 +293,27 @@ PCA showed a signficant drop in MSE as compared to our previous attempts. Howeve
 
 Next we will use the caret package to create a model pipeline were we can combine our preprocessing techique (PCA), cross-validation, and our linear regression model. 
 
+```{r}
+df0_subset1 <- df[,c("CrimeRate","Youth","BelowWage","ExpenditureYear0")]
+df0_subset2 <- df[,c("CrimeRate10","Youth10","BelowWage10","ExpenditureYear10")]
 
+names(df0_subset2)[1] <- "CrimeRate"
+names(df0_subset2)[2] <- "Youth"
+names(df0_subset2)[3] <- "BelowWage"
+names(df0_subset2)[4] <- "ExpenditureYear0"
+
+full_df <- rbind(df0_subset1,df0_subset2)
+
+```
 
 
 ```{r}
 library(caret)
 
 set.seed(12)
-train_index <- sample(1:nrow(df0), 0.6 * nrow(df0))
-X_train <- df0[train_index, ]
-X_test <- df0[-train_index, ]
+train_index <- sample(1:nrow(full_df), 0.7 * nrow(full_df))
+X_train <- full_df[train_index, ]
+X_test <- full_df[-train_index, ]
 head(X_train)
 
 
@@ -360,15 +371,17 @@ mean(
 
 ```
 
-## Conclusions
+## Conclusion
 
 We started off by running some basic linear regression on the dataset to see if we could notice any correlations that we could quickly iterate on. We did see that some variables, mainly Youth, Wage/BelowWage, ExpenditureYear0, appeared to be better correlated with CrimeRate. From there we looked at how some basic transformations impacted the data. It appeared that log transformation did well. This was confirmed through comparing models using anova. 
 
 After exploring some basic feature elimination/transformation we moved into modeling our data. We started out with a basic linear model and compared models using log transformation and quadratic polynomials. Ultimately PCA appeared to perform best and we moved into the final phase which involved creating a predictive pipeline using the caret library. 
 
+One issued that we faced was the relatively small dataset size. To increase the predictive ability of the model we stacked the data from year0 on top of year10, doubling our training and test sizes. 
+
 The first pipeline method used a simple combination of PCA and linear regression. 10-fold cross validation was applied to make sure we were not overfitting and we did a 50% training and test split. Our final model used the Boosted Linear Model from caret, with preprocessing steps that involved centered, scaled, Yeo-Johnson transformation, and pca. Tweaking the training set slighly we chose 60/40 as the train/test split as this produced the best results. 
 
-Ultimatley we were unable to produce a model with that was able to have a high R^2 and low MSE value. This may be due to the limited dataset size. Future work can be conducted on finding similar datasets that have more data, as this will allow us 
+Ultimatley we were unable to produce a model with that was able to have a high R^2 and low MSE value. This may be due to the limited dataset size. Future work can be conducted on finding similar datasets that have more data such as more than two years worth of data. 
 
 
 ## References:
