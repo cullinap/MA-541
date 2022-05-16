@@ -20,6 +20,8 @@ library(ggpubr)
 library(tidyverse)
 library(rstatix)
 library(ggstatsplot)
+library(FSA)
+library(boot)
 
 setwd("C:/Users/Laura/Documents/code/MA-541")
 df <- read.csv("Crime_R.csv")
@@ -144,16 +146,28 @@ We formulate the null hypothesis that the data comes from a normal distribution 
 kruskal.test(Males ~ Southern, data = df_stack)
 ```
 
-From our test we can see that our p-value is below our establish alpha level so we can reject the null hypothesis that the data comes from a normal distribution. With this bit of information we will proceed with a non-parametric test. In this case we will use the Dunn test and we formulate the same hypothesis we used for the anova test: The null hypothesis that the groups are equal and the 
+From our test we can see that our p-value is below our establish alpha level so we can reject the null hypothesis that the data comes from a normal distribution. With this bit of information we will proceed with a non-parametric test. In this case we will use the Dunn test. We formulate the same hypothesis we used for the anova test: The null hypothesis that the groups are equal and the the alertnative hypothesis that they 
 
+```{r}
+dunnTest(Males ~ Southern,
+  data = df_stack,
+  method = "holm"
+)
 
+```
+
+#### Results Discussion
+
+After running our non-parametric tests we see that there is a significant difference between group 1 and 2 (p < 0.05). Where group 1 corresponds to Non-Southern States & Males/1000 Females and group 2 are Southern States Males/1000 Females 10 years later. Therefore we accept the alertnative hypothesis that there is a difference in group 1 and group 2. 
+
+From the results it appears that there is a difference between Southern and Non-Southern Males/Females a decade apart although no evidence was found to show a difference within the same year. Although a difference was found through these methods future analysis 
 
 ```{r}
 ggbetweenstats(
   data = df_stack,
   x = "Southern",
   y = "Males",
-  type = "nonparametric", 
+  type = "Non-parametric", 
   plot.type = "box",
   pairwise.comparisons = TRUE,
   pairwise.display = "significant",
@@ -165,24 +179,35 @@ ggbetweenstats(
 
 
 
+## Experiment 2
 
+The next experiment deals with examining if a relationship exists between variables of the dataset and CrimeRate and if we can build a model to predict Crimerate. 
 
 ```{r}
-lm.fit <- lm(CrimeRate ~ ExpenditureYear0, data=df0)
-summary(lm.fit)
-
-plot(df0$CrimeRate, df$ExpenditureYear0)
-abline(lm.fit, lwd=3, col="red")
-
-par(mfrow = c(2,2))
-plot(lm.fit)
-
+stem(df$CrimeRate)
 ```
+
+To get started we look at the year 0 data to build any intuition on relationships between CrimeRate and any other variables. 
 
 ```{r}
 model <- lm(CrimeRate~.,data=df0)
 summary(model)
+```
 
+We can see from running the linear model on the data that it appears some relationship exists between CrimeRate, Youth, Education, ExpenditureYear0, Wage, and BelowWage. We will take these five features and perform further investigation on them to see if how their structure. 
+
+```{r}
+features <- df[,c("CrimeRate","Youth","Education","ExpenditureYear0","Wage","BelowWage")]
+
+str(features)
+pairs(features)
+```
+Based on the structure of the features it appears they would benefit from some transformation. We will conduct further experiments on what features to keep/transform.  
+
+The first experiment we will run is removing the weakest variable to see if we have any improvment on the R-squared value and if we can see if the model without education is significantly better using anova. 
+
+
+```{r}
 lm.fit <- lm(
   CrimeRate ~ 
     Education + Youth + Wage + BelowWage 
@@ -199,8 +224,10 @@ summary(lm.fit2)
 
 anova(lm.fit, lm.fit2)
 
-
 ```
+
+We can see that the model without the Education feature does not perform significanlty better. So we will move on to comparing a two models where we have log transformed 4 features in the first model (Youth, Wage, BelowWage and ExpenditureYear0) and model 2 has the same data but this time we remove Wage. 
+
 
 ```{r}
 lm.fit3 <- lm(
@@ -222,11 +249,129 @@ summary(lm.fit3)
 summary(lm.fit4)
 
 anova(lm.fit3, lm.fit4)
+```
+Our R-squared has improved slightly from the non-log transformed models and it looks like the second model in this group performs signficanly better. With this in mind we will now use a validation set approach to estimate the test error rate. We will split our data up roughly in half in this case because we don't have many training examples to work with. We will be using MSE to test the effectiveness of our model.  
 
+```{r}
+
+set.seed(1)
+train <- sample(47,24)
+
+lm.fit4 <- lm(
+  CrimeRate ~ 
+  + log10(Youth)
+  + log10(BelowWage)
+  + log10(ExpenditureYear0), data=df0, subset = train
+)
+
+mean((df$CrimeRate - predict(lm.fit4, df0))[-train]^2)
+```
+The MSE estimate for this approach is 360.78
+```{r}
+lm.fit4 <- lm(
+  CrimeRate ~ 
+  + poly(log10(Youth),2)
+  + poly(log10(BelowWage),2)
+  + poly(log10(ExpenditureYear0),2), data=df0, subset = train
+)
+
+mean((df$CrimeRate - predict(lm.fit4, df0))[-train]^2)
+```
+Adding the poly feature to our features reduces the MSE to 275.93. 
+
+Our next approach is to see if a dimensionality reduction technique can improve our model even more. In this case we are using PCA along with the three features from the model above. 
+
+```{r}
+new_features <- df[,c("Youth","BelowWage","ExpenditureYear0")]
+pca <- prcomp(features, scale. = TRUE)
+
+
+lm_pca <- lm(df0$CrimeRate ~ pca$x[,1] + pca$x[,2], subset=train)
+mean((df0$CrimeRate - predict(lm_pca, df0))[-train]^2)
+```
+PCA showed a signficant drop in MSE as compared to our previous attempts. However, to get a more robust idea of how our model performs across the whole dataset. 
+
+Next we will use the caret package to create a model pipeline were we can combine our preprocessing techique (PCA), cross-validation, and our linear regression model. 
+
+
+
+
+```{r}
+library(caret)
+
+set.seed(12)
+train_index <- sample(1:nrow(df0), 0.6 * nrow(df0))
+X_train <- df0[train_index, ]
+X_test <- df0[-train_index, ]
+head(X_train)
+
+
+fit2 <- train(
+    CrimeRate ~
+      Youth + BelowWage + ExpenditureYear0
+    , data=X_train
+    , method = "lm"
+    , preProcess=c("pca")
+    , trControl = trainControl(method = "cv")
+)
+
+fit2_pred <- predict(fit2, X_test)
+fit2
+
+postResample(pred = fit2_pred, obs = X_test$CrimeRate)
+```
+```{r}
+
+mean(
+  (X_test$CrimeRate - predict(
+            fit2, X_test[,c("Youth","BelowWage","ExpenditureYear0")])
+   )^2
+)
 
 ```
 
-### References:
+
+
+
+After putting it into a pipeline and testing 
+
+
+```{r}
+
+fit3 <- train(
+    CrimeRate ~
+      log10(Youth) + log10(BelowWage) + log10(ExpenditureYear0)
+    , data=X_train
+    , method = "BstLm"
+    , preProcess=c("center", "scale", "YeoJohnson", "pca")
+    , trControl = trainControl(method = "cv")
+)
+
+fit3_pred <- predict(fit3, X_test)
+fit3
+
+postResample(pred = fit3_pred, obs = X_test$CrimeRate)
+
+mean(
+  (X_test$CrimeRate - predict(
+            fit3, X_test[,c("Youth","BelowWage","ExpenditureYear0")])
+   )^2
+)
+
+```
+
+## Conclusions
+
+We started off by running some basic linear regression on the dataset to see if we could notice any correlations that we could quickly iterate on. We did see that some variables, mainly Youth, Wage/BelowWage, ExpenditureYear0, appeared to be better correlated with CrimeRate. From there we looked at how some basic transformations impacted the data. It appeared that log transformation did well. This was confirmed through comparing models using anova. 
+
+After exploring some basic feature elimination/transformation we moved into modeling our data. We started out with a basic linear model and compared models using log transformation and quadratic polynomials. Ultimately PCA appeared to perform best and we moved into the final phase which involved creating a predictive pipeline using the caret library. 
+
+The first pipeline method used a simple combination of PCA and linear regression. 10-fold cross validation was applied to make sure we were not overfitting and we did a 50% training and test split. Our final model used the Boosted Linear Model from caret, with preprocessing steps that involved centered, scaled, Yeo-Johnson transformation, and pca. Tweaking the training set slighly we chose 60/40 as the train/test split as this produced the best results. 
+
+Ultimatley we were unable to produce a model with that was able to have a high R^2 and low MSE value. This may be due to the limited dataset size. Future work can be conducted on finding similar datasets that have more data, as this will allow us 
+
+
+## References:
 
 1. www.statstutor.ac.uk
 2. US Census
