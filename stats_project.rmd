@@ -99,15 +99,17 @@ More detailed examination with our histograms and density plots again show us th
 With this intuition we will examine using anova whether there is a significant difference in group means. To accomplish this we must first encode our the Southern column to match Males and Males10, and then stack the data frames on top of eachother. Next we will run an anova test on the data. 
 
 Next we formulate the following hypothesis:
-```
-[]
-```
+$$ H_0: \alpha_1 = \alpha_2 = \alpha_3 = \alpha_4 $$
+$$ H_1: \alpha_l \neq \alpha_k $$
+The null hypothesis states that all groups measured will be the same while the alternative hypothesis states there is a difference in atleast two of the groups. 
 
-To analyze differences we will need to engineer Southern variable that corresponds to Males10. The first group of Males at what we will call time 0 will be code "1" if it is a Southern state and "0" if not. In the second group we will use "4" to denote a Southern state and "3" otherwise. In this way we will have 4 groups of Males. Before we perform our testing we will examine the data in more depth. 
+To proceed further we need to make four groups of data to compare. To do this we will map a new variable from Southern to Males10. We will stick with the current mapping of the Males and Southern column which is "1" if Southern otherwise "0". 
+
+In the second group we will use "3" to denote a Southern state and "2" otherwise. In this way we will have 4 groups of Males. At this point we will have four groups: 0:Non-Southern Males, 1:Southern Males, 2:Non-Southern Males10, 3:Southern Males. To run the test we then stack the data on top of eachother to create one long column of Males and Southern variables. Additionally we establish that we will reject the null hypothesis at an alpha of 0.05.  
 
 ```{r}
 
-df2$Southern <- ifelse(df2$Southern == 0, 3,4)
+df2$Southern <- ifelse(df2$Southern == 0, 2,3)
 names(df2)[2] <- "Males"
 
 df_stack <- rbind(df1,df2)
@@ -115,27 +117,35 @@ df_stack$Southern <- as.factor(df_stack$Southern)
 
 aov_test <- aov(Males ~ Southern, data=df_stack)
 summary(aov_test)
+
+glm_test <- glm(Males ~ Southern, data=df_stack, family=quasipoisson)
+
+summary(glm_test)
 ```
 
-It appears from the results that we can reject our null hypothesis that the means of the groups are equal. 
+As we can see from our test there appears to be a signficant difference between atleast two of the groups as the p-value is below our threshold of 0.05. Our test does not tell us which groups are different so we need to perform further tests to gain more insight. 
+ 
+Although it appears that we can proceed with post-hoc testing to compare groups from our previous examination of the underlying data's distribution we still need to check that the underlying assumption of normality is met.
 
-Our next step is to perform post-hoc teting to see which groups are different. First though we would like to examine our results in more detail to see what tests we need to perform. 
-
-We examine the residuals of the anova results to see if our data meets the normality assumption needed for tukey or bonferroni. We will do this graphically through a histogram of the residuals and qqplot. 
-
+To do this we will use both graphical methods and formally with the Shapiro-Wilk test. We will use the residuals of the anova test to test this assumption.
 
 ```{r}
-
+par(mfrow = c(1,2))
 hist(aov_test$residuals)
 qqPlot(aov_test$residuals)
 ```
 
-Graphically it appears that the residuals are not nornally distributed but we need to examine this more formally with a kruskal test
+Graphically it appears that the residuals are not nornally distributed but we need to examine this more formally with a kruskal test. 
+
+We formulate the null hypothesis that the data comes from a normal distribution and the alternative hypothesis that the data does not come from a normal distribution and we establish an alpha of 0.05. 
 
 
 ```{r}
 kruskal.test(Males ~ Southern, data = df_stack)
 ```
+
+From our test we can see that our p-value is below our establish alpha level so we can reject the null hypothesis that the data comes from a normal distribution. With this bit of information we will proceed with a non-parametric test. In this case we will use the Dunn test and we formulate the same hypothesis we used for the anova test: The null hypothesis that the groups are equal and the 
+
 
 
 ```{r}
@@ -143,7 +153,7 @@ ggbetweenstats(
   data = df_stack,
   x = "Southern",
   y = "Males",
-  type = "nonparametric", # ANOVA or Kruskal-Wallis
+  type = "nonparametric", 
   plot.type = "box",
   pairwise.comparisons = TRUE,
   pairwise.display = "significant",
@@ -152,6 +162,10 @@ ggbetweenstats(
 )
 
 ```
+
+
+
+
 
 ```{r}
 lm.fit <- lm(CrimeRate ~ ExpenditureYear0, data=df0)
@@ -212,7 +226,7 @@ anova(lm.fit3, lm.fit4)
 
 ```
 
-References:
+### References:
 
 1. www.statstutor.ac.uk
 2. US Census
