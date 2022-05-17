@@ -43,7 +43,7 @@ df <- read.csv("Crime_R.csv")
 #str(df)
 ```
 
-### Introduction
+### Chapter 1: Introduction
 
 The Crime Rate dataset is comprised of data crime rate and associated variables collected in the United States at two different periods of time. The dataset is broken down into 27 columns and 47 rows. The dataset was developed by the University of Sheffield 
 
@@ -67,9 +67,11 @@ head(df0,2)
 tail(df0,2)
 ```
 
-### Experiment 1
+### Chapter2: Experiment 1
 
 The first question we will examine will be whether there is a relationship between Males per 1000 females and states classified as Southern. To accomplish this we will use 3 columns; Southern, Males, and Males10. As mentioned previously Southern is a binary variable while Males and Males10 are discrete variables. Males and Males10 both refer to the number of males per 1000 females in counted in a US State. 
+
+### Chapter 2.1: Exploratory Data Analysis
 
 To get an idea of the make-up of the data we look at the summary statistics.
 
@@ -111,6 +113,8 @@ ggplot(df, aes(x=Males10)) +
 
 More detailed examination with our histograms and density plots again show us that data may be skewed to the right. This will be important to note as we further examine whether there is a difference in means between groups of data. 
 
+### Chapter 2.2: Testing
+
 With this intuition we will examine using anova whether there is a significant difference in group means. To accomplish this we must first encode our the Southern column to match Males and Males10, and then stack the data frames on top of eachother. Next we will run an anova test on the data. 
 
 Next we formulate the following hypothesis:
@@ -132,10 +136,6 @@ df_stack$Southern <- as.factor(df_stack$Southern)
 
 aov_test <- aov(Males ~ Southern, data=df_stack)
 summary(aov_test)
-
-glm_test <- glm(Males ~ Southern, data=df_stack, family=quasipoisson)
-
-summary(glm_test)
 ```
 
 As we can see from our test there appears to be a signficant difference between atleast two of the groups as the p-value is below our threshold of 0.05. Our test does not tell us which groups are different so we need to perform further tests to gain more insight. 
@@ -159,7 +159,7 @@ We formulate the null hypothesis that the data comes from a normal distribution 
 kruskal.test(Males ~ Southern, data = df_stack)
 ```
 
-From our test we can see that our p-value is below our establish alpha level so we can reject the null hypothesis that the data comes from a normal distribution. With this bit of information we will proceed with a non-parametric test. In this case we will use the Dunn test. We formulate the same hypothesis we used for the anova test: The null hypothesis that the groups are equal and the the alertnative hypothesis that they 
+From our test we can see that our p-value is below our establish alpha level so we can reject the null hypothesis that the data comes from a normal distribution. With this bit of information we will proceed with a non-parametric test. In this case we will use the Dunn test. We formulate the same hypothesis we used for the anova test: The null hypothesis that the groups are equal and the the alternative hypothesis that at least two of the groups are different. 
 
 ```{r}
 dunnTest(Males ~ Southern,
@@ -169,11 +169,11 @@ dunnTest(Males ~ Southern,
 
 ```
 
-#### Results Discussion
+### Chapter 2.3: Results Discussion
 
 After running our non-parametric tests we see that there is a significant difference between group 1 and 2 (p < 0.05). Where group 1 corresponds to Non-Southern States & Males/1000 Females and group 2 are Southern States Males/1000 Females 10 years later. Therefore we accept the alertnative hypothesis that there is a difference in group 1 and group 2. 
 
-From the results it appears that there is a difference between Southern and Non-Southern Males/Females a decade apart although no evidence was found to show a difference within the same year. Although a difference was found through these methods future analysis 
+From the results it appears that there is a difference between Southern and Non-Southern Males/Females a decade apart although no evidence was found to show a difference within the same year. 
 
 ```{r}
 ggbetweenstats(
@@ -191,8 +191,8 @@ ggbetweenstats(
 ```
 
 
-
-### Experiment 2
+\newpage
+### Chapter 3: Experiment 2
 
 The next experiment deals with examining if a relationship exists between variables of the dataset and CrimeRate and if we can build a model to predict Crimerate. 
 
@@ -216,6 +216,8 @@ str(features)
 pairs(features)
 ```
 Based on the structure of the features it appears they would benefit from some transformation. We will conduct further experiments on what features to keep/transform.  
+
+### Chapter 3.1: Feature Engineering
 
 The first experiment we will run is removing the weakest variable to see if we have any improvment on the R-squared value and if we can see if the model without education is significantly better using anova. 
 
@@ -264,6 +266,8 @@ summary(lm.fit4)
 anova(lm.fit3, lm.fit4)
 ```
 Our R-squared has improved slightly from the non-log transformed models and it looks like the second model in this group performs signficanly better. With this in mind we will now use a validation set approach to estimate the test error rate. We will split our data up roughly in half in this case because we don't have many training examples to work with. We will be using MSE to test the effectiveness of our model.  
+
+### Chapter 3.2: Model Building
 
 ```{r}
 
@@ -357,8 +361,7 @@ mean(
 
 
 
-After putting it into a pipeline and testing 
-
+Finally we try a boosted linear model:
 
 ```{r}
 
@@ -383,8 +386,8 @@ mean(
 )
 
 ```
-
-### Conclusion
+\newpage
+### Chapter 4: Conclusion
 
 We started off by running some basic linear regression on the dataset to see if we could notice any correlations that we could quickly iterate on. We did see that some variables, mainly Youth, Wage/BelowWage, ExpenditureYear0, appeared to be better correlated with CrimeRate. From there we looked at how some basic transformations impacted the data. It appeared that log transformation did well. This was confirmed through comparing models using anova. 
 
@@ -396,6 +399,7 @@ The first pipeline method used a simple combination of PCA and linear regression
 
 Ultimatley we were unable to produce a model with that was able to have a high R^2 and low MSE value. This may be due to the limited dataset size. Future work can be conducted on finding similar datasets that have more data such as more than two years worth of data. 
 
+\newpage
 
 ### References:
 
